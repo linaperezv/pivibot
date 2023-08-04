@@ -1,12 +1,19 @@
 const { REST } = require("@discordjs/rest");
-const { Client, GatewayIntentBits, Partials, Events } = require("discord.js");
-const { Routes } = require("discord-api-types/v10");
+const {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  ButtonBuilder,
+  ActionRowBuilder,
+} = require("discord.js");
+const { Routes, ButtonStyle } = require("discord-api-types/v10");
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.DirectMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildMessages,
   ],
   partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
 });
@@ -55,24 +62,87 @@ client.once("ready", () => {
     .catch(console.error);
 });
 
-client.on(Events.guildMemberAdd, (member) => {
-  console.log(member)
+client.on("GuildMemberAdd", async (member) => {
+  console.log(member);
   try {
     const init = async (member) => {
-    
-      await member.send(`hi cachon`);
-       
+      await member.send(`hi, welcome to Pivi`);
     };
+    init(member);
   } catch (error) {
     console.error(`Error sending DM to ${member.user.tag}: ${error.message}`);
   }
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isCommand()) return;
-  const { commandName } = interaction;
-  const selectedCommand = commands.find((c) => commandName === c.name);
-  selectedCommand.init(interaction, client);
+  if (interaction.isCommand()) {
+    const { commandName } = interaction;
+    const selectedCommand = commands.find((c) => commandName === c.name);
+    if (selectedCommand) {
+      selectedCommand.init(interaction, client);
+    }
+  } else if (interaction.isButton()) {
+    const accept = new ButtonBuilder()
+      .setCustomId("accept")
+      .setLabel("accept")
+      .setStyle(ButtonStyle.Success);
+
+    const reject = new ButtonBuilder()
+      .setCustomId("reject")
+      .setLabel("reject")
+      .setStyle(ButtonStyle.Danger);
+
+    const row = new ActionRowBuilder().addComponents(accept, reject);
+    if (interaction.customId.match(/join\-/)) {
+      const [command, userId, channelId] = interaction.customId.split("-");
+      const channel = await client.channels.fetch(`${channelId}`);
+      await interaction.reply({
+        content: `Your request was sent!`,
+        ephemeral: true,
+      });
+      channel.send({
+        content: `${interaction.user} wants to join your match`,
+        components: [row],
+      });
+    } else if (interaction.customId.match(/offer10less\-/)) {
+      const [command, userId, channelId, bet] = interaction.customId.split("-");
+      const channel = await client.channels.fetch(`${channelId}`);
+      await interaction.reply({
+        content: `Your request was sent!`,
+        ephemeral: true,
+      });
+      channel.send({
+        content: `${interaction.user} is offering $${bet} to join your match`,
+        components: [row],
+      });
+    } else if (interaction.customId.match(/offer10more\-/)) {
+      const [command, userId, channelId, bet] = interaction.customId.split("-");
+      const channel = await client.channels.fetch(`${channelId}`);
+      await interaction.reply({
+        content: `Your request was sent!`,
+        ephemeral: true,
+      });
+      channel.send({
+        content: `${interaction.user} is offering $${bet} to join your match`,
+        components: [row],
+      });
+    } else if (interaction.customId.match(/offer20more\-/)) {
+      const [command, userId, channelId, bet] = interaction.customId.split("-");
+      const channel = await client.channels.fetch(`${channelId}`);
+      await interaction.reply({
+        content: `Your request was sent!`,
+        ephemeral: true,
+      });
+      channel.send({
+        content: `${interaction.user} is offering $${bet} to join your match`,
+        components: [row],
+      });
+    }else if (interaction.customId.match(/reject/)) {
+
+     await interaction.message.delete()
+    
+    }
+  }
 });
 
 client.login(token);
